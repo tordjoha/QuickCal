@@ -25,8 +25,6 @@ Provide a quick start guide to help users get started:
 2. Hit "Allow" when asked for calendar access.
 3. Next event should now display in the menu bar.
 
-For detailed usage instructions, check out the [documentation](#).
-
 ---
 
 ## Roadmap
