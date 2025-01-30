@@ -7,7 +7,7 @@
 
 ### Requirements
 - macOS version: ...
-- Disk space: ...
+- Disk space: 22MB
 - Additional requirements: access to calendar.
 
 ### Steps
@@ -34,8 +34,6 @@ Here's a glimpse at what's next for **QuickCal**:
 
 ### Upcoming Features
 - **Popup window**: shows more information about the current event, aswell as all other events scheduled current day.
-- **Always up to date**: periodically updates the app, in intervals specified by the user, eg 5, 10 minutes, 1 day etc.
-
 ---
 
 ## License
