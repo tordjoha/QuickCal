@@ -45,7 +45,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 } else {
                     DispatchQueue.main.async {
-                        self.statusItem?.button?.title = "Access Denied"
+                        self.statusItem?.button?.title = "Access denied"
                     }
                 }
             }
@@ -54,11 +54,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             startEventRefreshTimer()
         case .restricted, .denied:
             DispatchQueue.main.async {
-                self.statusItem?.button?.title = "Enable Access in System Settings"
+                self.statusItem?.button?.title = "Enable access in system settings"
             }
         @unknown default:
             DispatchQueue.main.async {
-                self.statusItem?.button?.title = "Access Error"
+                self.statusItem?.button?.title = "Access error"
             }
         }
     }
@@ -73,13 +73,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func updateNextEvent() {
         let calendars = eventStore.calendars(for: .event)
         let now = Date()
+        let startOfDay = Calendar.current.startOfDay(for: now)
         let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: now)!
 
-        let predicate = eventStore.predicateForEvents(withStart: now, end: endOfDay, calendars: calendars)
+        let predicate = eventStore.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: calendars)
         let events = eventStore.events(matching: predicate).sorted { $0.startDate < $1.startDate }
-
+        
+        let pastEvents = events.filter { $0.endDate <= now }
+        let upcomingEvents = events.filter { $0.endDate > now }
+        
         DispatchQueue.main.async {
-            self.updateMenu(with: events)
+            if events.isEmpty {
+                self.statusItem?.button?.title = "No events today"
+            } else if upcomingEvents.isEmpty {
+                self.statusItem?.button?.title = "All events done for today"
+            } else {
+                self.updateMenu(with: upcomingEvents)
+                return
+            }
+            self.updateMenu(with: [])
         }
     }
     
@@ -92,10 +104,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             let startTime = timeFormatter.string(from: nextEvent.startDate)
             let endTime = timeFormatter.string(from: nextEvent.endDate)
-            let title = nextEvent.title ?? "No Title"
+            let title = nextEvent.title ?? "No title"
             statusItem?.button?.title = "\(startTime) - \(endTime): \(title)"
-        } else {
-            statusItem?.button?.title = "No Events Today"
         }
         
         for event in events {
@@ -103,10 +113,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             timeFormatter.timeStyle = .short
             
             let startTime = timeFormatter.string(from: event.startDate)
-            let title = event.title ?? "No Title"
-            let location = event.location ?? "No Location"
+            let title = event.title ?? "No title"
+            let location = event.location ?? "No location"
             let menuItem = NSMenuItem(title: "\(startTime): \(title) @ \(location)", action: nil, keyEquivalent: "")
             menu.addItem(menuItem)
+        }
+        
+        if events.isEmpty {
+            menu.addItem(NSMenuItem(title: "No events", action: nil, keyEquivalent: ""))
         }
         
         menu.addItem(NSMenuItem.separator())
