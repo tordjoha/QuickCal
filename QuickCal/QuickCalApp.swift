@@ -113,9 +113,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             timeFormatter.timeStyle = .short
             
             let startTime = timeFormatter.string(from: event.startDate)
+            let endTime = timeFormatter.string(from: event.endDate)
             let title = event.title ?? "No title"
             let location = event.location ?? "No location"
-            let menuItem = NSMenuItem(title: "\(startTime): \(title) @ \(location)", action: nil, keyEquivalent: "")
+            
+            // Update the menu item to show both start and end times
+            let menuItem = NSMenuItem(title: "\(startTime) - \(endTime): \(title) @ \(location)", action: nil, keyEquivalent: "")
             menu.addItem(menuItem)
         }
         
