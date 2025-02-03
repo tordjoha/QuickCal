@@ -35,31 +35,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func requestCalendarAccess() {
         let status = EKEventStore.authorizationStatus(for: .event)
         
+        // Switch statement must be exhaustive
         switch status {
         case .notDetermined:
-            eventStore.requestAccess(to: .event) { granted, error in
-                if granted {
-                    DispatchQueue.main.async {
+            // Request access to the calendar
+            eventStore.requestFullAccessToEvents() { granted, error in
+                DispatchQueue.main.async {
+                    if granted {
                         self.updateNextEvent()
                         self.startEventRefreshTimer()
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        self.statusItem?.button?.title = "Access denied"
+                    } else {
+                        self.handleError("Calendar access denied. Enable it in System Settings.")
                     }
                 }
             }
         case .authorized:
+            // If access is already granted, update the events and start timer
             updateNextEvent()
             startEventRefreshTimer()
-        case .restricted, .denied:
-            DispatchQueue.main.async {
-                self.statusItem?.button?.title = "Enable access in system settings"
-            }
+        case .restricted:
+            // Access is restricted (e.g. parental controls)
+            handleError("Calendar access is restricted. You cannot access calendars.")
+        case .denied:
+            // Access is explicitly denied
+            handleError("Calendar access is denied. Enable it in System Settings.")
         @unknown default:
-            DispatchQueue.main.async {
-                self.statusItem?.button?.title = "Access error"
-            }
+            // Handle any unknown future cases that may appear in the future versions of the framework
+            handleError("Unknown authorization status.")
         }
     }
     
@@ -78,8 +80,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let predicate = eventStore.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: calendars)
         let events = eventStore.events(matching: predicate).sorted { $0.startDate < $1.startDate }
-        
-        let pastEvents = events.filter { $0.endDate <= now }
+        //let pastEvents = events.filter { $0.endDate <= now }
         let upcomingEvents = events.filter { $0.endDate > now }
         
         DispatchQueue.main.async {
@@ -133,6 +134,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         statusItem?.menu = menu
     }
+    
+    func handleError(_ message: String) {
+            DispatchQueue.main.async {
+                self.statusItem?.button?.title = message
+                print("Error: \(message)") // Log for debugging
+            }
+        }
     
     @objc func quitApp() {
         NSApplication.shared.terminate(self)
